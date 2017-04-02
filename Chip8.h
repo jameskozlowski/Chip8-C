@@ -150,6 +150,24 @@ void Chip8Reset(Chip8CPU *Chip8);
 bool Chip8LoadRom(Chip8CPU *Chip8, char *filename);
 
 /**
+* Saves the emulator state to a file
+*
+* @param Chip8 Address of the Chip8CPU object
+* @param filename filename to save state to
+* @return false if the file could not be saved.
+*/
+bool Chip8SaveState(Chip8CPU *Chip8, char *filename);
+
+/**
+* Loads the emulator state to a file
+*
+* @param Chip8 Address of the Chip8CPU object
+* @param filename filename to Load state from
+* @return false if the file could not be loaded.
+*/
+bool Chip8LoadState(Chip8CPU *Chip8, char *filename);
+
+/**
 * Fetches and runs a opcode
 *
 * @param Chip8 Address of the Chip8CPU object
@@ -162,11 +180,17 @@ void Chip8EmulateCycle(Chip8CPU *Chip8);
  * CHIP-8 has 35 opcodes, which are all two bytes long and stored big-endian. 
  * The opcodes are listed below, in hexadecimal and with the following symbols:
  *
- * OPCODE 	DISC
+ * OPCODE 	DISC (Instructions marked with (*) are new in SUPER-CHIP.)
  * --------------------------------------------------------------------------------------------
+ * 00CN*    Scroll display N lines down
  * 0NNN    	RCA 1802 program at address NNN. Not necessary for most ROMs.
  * 00E0 	Clears the screen.
  * 00EE 	Returns from a subroutine.
+ * 00FB*    Scroll display 4 pixels right
+ * 00FC*    Scroll display 4 pixels left
+ * 00FD*    Exit CHIP interpreter
+ * 00FE*    Disable extended screen mode
+ * 00FF*    Enable extended screen mode for full-screen graphics
  * 1NNN 	Jumps to address NNN.
  * 2NNN 	Calls subroutine at NNN.
  * 3XNN 	Skips the next instruction if VX equals NN. 
@@ -187,7 +211,8 @@ void Chip8EmulateCycle(Chip8CPU *Chip8);
  * ANNN 	Sets I to the address NNN.
  * BNNN 	Jumps to the address NNN plus V0.
  * CXNN 	Sets VX to the result of a bitwise and operation on a random number and NN.
- * DXYN 	Draws a sprite at coordinate (VX, VY) that has a width of 8 pixels and a height of N pixels. 
+ * DXYN*    Show N-byte sprite from M(I) at coords (VX,VY), VF :=
+ *          collision. If N=0 and extended mode, show 16x16 sprite.
  * EX9E 	Skips the next instruction if the key stored in VX is pressed. 
  * EXA1 	Skips the next instruction if the key stored in VX isn't pressed.
  * FX07 	Sets VX to the value of the delay timer.
@@ -196,9 +221,12 @@ void Chip8EmulateCycle(Chip8CPU *Chip8);
  * FX18 	Sets the sound timer to VX.
  * FX1E 	Adds VX to I.[3]
  * FX29 	sets I to the location of the sprite for the character in VX. Characters 0-F  are represented by a 4x5 font.
+ * FX30*    Point I to 10-byte font sprite for digit VX (0..9)
  * FX33 	Stores the binary-coded decimal representation of VX, with the most significant of three digits at the address in I.
  * FX55 	Stores V0 to VX (including VX) in memory starting at address I.[4]
  * FX65 	Fills V0 to VX (including VX) with values from memory starting at address I.
+ * FX75*    Store V0..VX in RPL user flags (X <= 7)
+ * FX85*    Read V0..VX from RPL user flags (X <= 7) 
  **********************************************************************************************/
 
 //Array of function pointers to the OpCodes

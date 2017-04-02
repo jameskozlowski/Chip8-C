@@ -21,6 +21,7 @@ int main(int argc, char **argv)
 {
 	Chip8Reset(&mychip8);
 
+
 	if (argc != 2 || Chip8LoadRom(&mychip8, argv[1]) == false)
         cout << "Error loading file";
 
@@ -48,10 +49,10 @@ int main(int argc, char **argv)
 				if (event.key.code == sf::Keyboard::Escape)				
 						exit(0);
 
-				//else if (event.key.code == sf::Keyboard::F1)
-				//	mychip8.SaveState("state.c8");
-				//else if (event.key.code == sf::Keyboard::F2)
-				//	mychip8.LoadState("state.c8");
+				else if (event.key.code == sf::Keyboard::F1)
+					Chip8SaveState(&mychip8, (char*)"state.c8");
+				else if (event.key.code == sf::Keyboard::F2)
+					Chip8LoadState(&mychip8, (char*)"state.c8");
 				else if (event.key.code == sf::Keyboard::Num1)
 					mychip8.key[0x1] = 1;
 				else if (event.key.code == sf::Keyboard::Num2)

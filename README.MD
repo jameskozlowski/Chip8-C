@@ -20,7 +20,6 @@ Have a look at the source files, they are well documented
 ## Coming Soon ##
 * Build a Compiler
 * Build a Decompiler
-* Enable load and save states
 * build in a simple debugger
 
 ## About the Chip-8 interpreter ##

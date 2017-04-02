@@ -21,7 +21,7 @@ int main(int argc, char **argv)
 {
 	Chip8Reset(&mychip8);
 
-	if (argc != 2 || Chip8LoadRom(&mychip8,argv[1]) == false)
+	if (argc != 2 || Chip8LoadRom(&mychip8, argv[1]) == false)
         cout << "Error loading file";
 
 	
@@ -144,22 +144,32 @@ int main(int argc, char **argv)
 
 void DrawScreen(sf::RenderWindow * window)
 {
+	int screeny = 32;
+	int screenx = 64;
+	modifier = 10;
+
+	if (mychip8.extendedGraphicsMode == true)
+	{
+		screeny = 64;
+		screenx = 128;
+		modifier = 5;
+	}
 	// Draw
-	for(int y = 0; y < 32; ++y)		
-		for(int x = 0; x < 64; ++x)
+	for(int y = 0; y < screeny; ++y)		
+		for(int x = 0; x < screenx; ++x)
 		{
-			if(mychip8.videoMemory[(y*64) + x] == 0) 
+			if(mychip8.videoMemory[(y*screenx) + x] == 0) 
 			{
 				sf::RectangleShape rectangle(sf::Vector2f(modifier, modifier));
 				rectangle.setFillColor(sf::Color::Black);
-				rectangle.setPosition(x * 10, y * 10);
+				rectangle.setPosition(x * modifier, y * modifier);
 				window->draw(rectangle);
 			}
 			else			
 			{
 				sf::RectangleShape rectangle(sf::Vector2f(modifier, modifier));
 				rectangle.setFillColor(sf::Color::White);
-				rectangle.setPosition(x * 10, y * 10);
+				rectangle.setPosition(x * modifier, y * modifier);
 				window->draw(rectangle);
 			}
 

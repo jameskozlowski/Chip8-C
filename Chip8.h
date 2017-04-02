@@ -56,6 +56,9 @@ typedef struct
     //The VF register should not be used by any program, as it is used as a flag by some instructions.
     unsigned char V[16];
 
+    //Super Chip 8 8-bit, user-flag registers
+    unsigned char R[8];
+
     //This register is generally used to store memory addresses.
     unsigned short I;
 
@@ -67,10 +70,18 @@ typedef struct
      *********************
      *(0,0)        (63,0)*
      *                   *
-     *(0,32)      (63,31)*
+     *(0,31)      (63,31)*
      *********************
     */
-    unsigned char videoMemory[64 * 32];
+    unsigned char videoBuffer[128 * 64];
+
+    //points to the current spot in the video memory
+    //set to videoBuffer[0] for chip-8
+    //moves around for Super Chip-8 Extended mode
+    unsigned char *videoMemory;
+
+    //Super Chip-8 extended graphics enabled
+    bool extendedGraphicsMode;
 
     //The delay timer is active whenever the delay timer register (DT) is non-zero. 
     //This timer does nothing more than subtract 1 from the value of DT at a rate of 60Hz. When DT reaches 0, it deactivates.
@@ -211,15 +222,84 @@ void Chip8EmulateCycle(Chip8CPU *Chip8);
 void Chip8CPUNULL(Chip8CPU *Chip8);
 
 /**
-* 00E0 - Clear the display.
-* 00EE - Return from a subroutine. 
+* 0000 opcodes
+*
+* @param Chip8 Address of the Chip8CPU object
+* @return Nothing.
+*/
+void Chip8OpCode00XX(Chip8CPU *Chip8);
+
+/**
+* Scroll display N lines down (Super Chip-8)
+* Moves the memory pointer
+*
+* @param Chip8 Address of the Chip8CPU object
+* @return Nothing.
+*/
+void Chip8OpCode00CN(Chip8CPU *Chip8);
+
+/**
+* Clear the display.
+*
+* @param Chip8 Address of the Chip8CPU object
+* @return Nothing.
+*/
+void Chip8OpCode00E0(Chip8CPU *Chip8);
+
+/**
+* Return from a subroutine. 
 * The interpreter sets the program counter to the address at the top of the stack,
 * then subtracts 1 from the stack pointer.
 *
 * @param Chip8 Address of the Chip8CPU object
 * @return Nothing.
 */
-void Chip8OpCode00EX(Chip8CPU *Chip8);
+void Chip8OpCode00EE(Chip8CPU *Chip8);
+
+/**
+* Scroll display 4 pixels right (Super Chip-8)
+* 
+*
+* @param Chip8 Address of the Chip8CPU object
+* @return Nothing.
+*/
+void Chip8OpCode00FB(Chip8CPU *Chip8);
+
+/**
+* Scroll display 4 pixels left (Super Chip-8)
+* 
+*
+* @param Chip8 Address of the Chip8CPU object
+* @return Nothing.
+*/
+void Chip8OpCode00FC(Chip8CPU *Chip8);
+
+/**
+* Exit CHIP interpreter (Super Chip-8)
+* 
+*
+* @param Chip8 Address of the Chip8CPU object
+* @return Nothing.
+*/
+void Chip8OpCode00FD(Chip8CPU *Chip8);
+
+/**
+* Disable extended screen mode (Super Chip-8)
+* 
+*
+* @param Chip8 Address of the Chip8CPU object
+* @return Nothing.
+*/
+void Chip8OpCode00FE(Chip8CPU *Chip8);
+
+/**
+* Enable extended screen mode for full-screen graphics (Super Chip-8)
+* 
+*
+* @param Chip8 Address of the Chip8CPU object
+* @return Nothing.
+*/
+void Chip8OpCode00FF(Chip8CPU *Chip8);
 
 /**
 * Jump to location nnn.
@@ -525,6 +605,15 @@ void Chip8OpCodeFX1E(Chip8CPU *Chip8);
 void Chip8OpCodeFX29(Chip8CPU *Chip8);
 
 /**
+* Set I = location of 10 bit sprite for digit Vx. (Super Chip-8)
+* The value of I is set to the location for the hexadecimal sprite corresponding to the value of Vx. 
+*
+* @param Chip8 Address of the Chip8CPU object
+* @return Nothing.
+*/
+void Chip8OpCodeFX30(Chip8CPU *Chip8);
+
+/**
 * Store BCD representation of Vx in memory locations I, I+1, and I+2.
 * The interpreter takes the decimal value of Vx, 
 * and places the hundreds digit in memory at location in I, 
@@ -552,5 +641,23 @@ void Chip8OpCodeFX55(Chip8CPU *Chip8);
 * @return Nothing.
 */
 void Chip8OpCodeFX65(Chip8CPU *Chip8);
+
+/**
+* Store V0..VX in R user flags (X <= 7) (Super Chip-8)
+*
+* @param Chip8 Address of the Chip8CPU object
+* @return Nothing.
+*/
+void Chip8OpCodeFX75(Chip8CPU *Chip8);
+
+/**
+* Read V0..VX in R user flags (X <= 7) (Super Chip-8)
+*
+* @param Chip8 Address of the Chip8CPU object
+* @return Nothing.
+*/
+void Chip8OpCodeFX85(Chip8CPU *Chip8);
+
+
 
 #endif //header guard CHIP8_H

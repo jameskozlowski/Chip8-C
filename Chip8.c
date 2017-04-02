@@ -58,7 +58,7 @@ unsigned long  Chip8getMilliSpan(unsigned long nTimeStart)
 /**********************************************************************************************
  * This is the Chip 8 font set. Each number or character is 4 pixels wide and 5 pixel high.
  **********************************************************************************************/
-unsigned char chip8_fontset[80] =
+unsigned char chip8_fontset[240] =
 { 
 	0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
 	0x20, 0x60, 0x20, 0x20, 0x70, // 1
@@ -75,7 +75,25 @@ unsigned char chip8_fontset[80] =
 	0xF0, 0x80, 0x80, 0x80, 0xF0, // C
 	0xE0, 0x90, 0x90, 0x90, 0xE0, // D
 	0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
-	0xF0, 0x80, 0xF0, 0x80, 0x80  // F
+	0xF0, 0x80, 0xF0, 0x80, 0x80,  // F
+
+	//Super Chip-8 Font
+    0xF0, 0xF0, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0xF0, 0xF0, //0
+    0x20, 0x20, 0x60, 0x60, 0x20, 0x20, 0x20, 0x20, 0x70, 0x70, //1
+    0xF0, 0xF0, 0x10, 0x10, 0xF0, 0xF0, 0x80, 0x80, 0xF0, 0xF0, //2
+    0xF0, 0xF0, 0x10, 0x10, 0xF0, 0xF0, 0x10, 0x10, 0xF0, 0xF0, //3
+    0x90, 0x90, 0x90, 0x90, 0xF0, 0xF0, 0x10, 0x10, 0x10, 0x10, //4
+    0xF0, 0xF0, 0x80, 0x80, 0xF0, 0xF0, 0x10, 0x10, 0xF0, 0xF0, //5
+    0xF0, 0xF0, 0x80, 0x80, 0xF0, 0xF0, 0x90, 0x90, 0xF0, 0xF0, //6
+    0xF0, 0xF0, 0x10, 0x10, 0x20, 0x20, 0x40, 0x40, 0x40, 0x40, //7
+    0xF0, 0xF0, 0x90, 0x90, 0xF0, 0xF0, 0x90, 0x90, 0xF0, 0xF0, //8
+    0xF0, 0xF0, 0x90, 0x90, 0xF0, 0xF0, 0x10, 0x10, 0xF0, 0xF0, //9
+    0xF0, 0xF0, 0x90, 0x90, 0xF0, 0xF0, 0x90, 0x90, 0x90, 0x90, //A
+    0xE0, 0xE0, 0x90, 0x90, 0xE0, 0xE0, 0x90, 0x90, 0xE0, 0xE0, //B
+    0xF0, 0xF0, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0xF0, 0xF0, //C
+    0xE0, 0xE0, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0xE0, 0xE0, //D
+    0xF0, 0xF0, 0x80, 0x80, 0xF0, 0xF0, 0x80, 0x80, 0xF0, 0xF0, //E
+	0xF0, 0xF0, 0x80, 0x80, 0xF0, 0xF0, 0x80, 0x80, 0x80, 0x80  //F
 };
 
 /**********************************************************************************************
@@ -124,7 +142,7 @@ unsigned char chip8_fontset[80] =
 //Array of function pointers to the OpCodes
 void (*Chip8OpcodeTable[16])(Chip8CPU *Chip8) = 
 {
-	Chip8OpCode00EX,
+	Chip8OpCode00XX,
 	Chip8OpCode1NNN,
 	Chip8OpCode2NNN,
 	Chip8OpCode3XNN,
@@ -186,10 +204,13 @@ void Chip8Reset(Chip8CPU *Chip8)
 	for(int i = 0; i < 16; ++i)
 		Chip8->key[i] = 0;		
 	for (int i = 0; i < 64 * 32; ++i)
-		Chip8->videoMemory[i] = 0;
+		Chip8->videoBuffer[i] = 0;
 	Chip8->refreshScreen = false;
-	for(int i = 0; i < 80; ++i)
+	for(int i = 0; i < 240; ++i)
 		Chip8->memory[i] = chip8_fontset[i];
+
+	//set the screen pointer to the top left for normal mode
+	Chip8->videoMemory = Chip8->videoBuffer;
 }
 
 /**
@@ -235,8 +256,10 @@ void Chip8EmulateCycle(Chip8CPU *Chip8)
 	Chip8->lastTick = Chip8getMilliCount();
 
     Chip8->opcode = Chip8->memory[Chip8->pc++] << 8 | Chip8->memory[Chip8->pc++];
-	//printf("opcode %i\n", Chip8->opcode );
-    (*Chip8OpcodeTable[(Chip8->opcode&0xF000)>>12])(Chip8);
+	
+	//printf("opcode: %04X\n", Chip8->opcode );
+    
+	(*Chip8OpcodeTable[(Chip8->opcode&0xF000)>>12])(Chip8);
 
 	if (Chip8getMilliSpan(Chip8->lastTick2) > 6)
 	{
@@ -269,8 +292,82 @@ void Chip8CPUNULL(Chip8CPU *Chip8)
 	printf("bad opcode\n");
 }
 
+
+/**
+* 0000 opcodes
+*
+* @param Chip8 Address of the Chip8CPU object
+* @return Nothing.
+*/
+void Chip8OpCode00XX(Chip8CPU *Chip8)
+{
+	//odd one out
+	if ((Chip8->opcode & 0x00F0) == 0x00C0)
+		Chip8OpCode00CN(Chip8);
+	else
+	{
+		switch(Chip8->opcode & 0x00FF)
+		{
+			case 0x00E0:
+				Chip8OpCode00E0(Chip8);
+				break;
+
+			case 0x00EE:
+				Chip8OpCode00EE(Chip8);
+				break;
+			
+			case 0x00FB:
+				Chip8OpCode00FB(Chip8);
+				break;
+
+			case 0x00FC:
+				Chip8OpCode00FC(Chip8);
+				break;
+
+			case 0x00FD:
+				Chip8OpCode00FD(Chip8);
+				break;
+
+			case 0x00FE:
+				Chip8OpCode00FE(Chip8);
+				break;
+
+			case 0x00FF:
+				Chip8OpCode00FF(Chip8);
+				break;
+			
+			default:
+				Chip8CPUNULL(Chip8);
+		}
+	}
+}
+
 /**
 * 00E0 - Clear the display.
+*
+* @param Chip8 Address of the Chip8CPU object
+* @return Nothing.
+*/
+void Chip8OpCode00E0(Chip8CPU *Chip8)
+{
+	for (int i = 0; i < 64 * 32; ++i)
+		Chip8->videoBuffer[i] = 0;
+	Chip8->refreshScreen = true;
+}
+
+/**
+* Scroll display N lines down
+* Moves the memory pointer
+*
+* @param Chip8 Address of the Chip8CPU object
+* @return Nothing.
+*/
+void Chip8OpCode00CN(Chip8CPU *Chip8)
+{
+	Chip8->videoMemory += 128 * (Chip8->opcode & 0x000F);
+}
+
+/**
 * 00EE - Return from a subroutine. 
 * The interpreter sets the program counter to the address at the top of the stack,
 * then subtracts 1 from the stack pointer.
@@ -278,25 +375,70 @@ void Chip8CPUNULL(Chip8CPU *Chip8)
 * @param Chip8 Address of the Chip8CPU object
 * @return Nothing.
 */
-void Chip8OpCode00EX(Chip8CPU *Chip8)
+void Chip8OpCode00EE(Chip8CPU *Chip8)
 {
-	switch(Chip8->opcode & 0x000F)
-	{
-		//Clear the display.
-		case 0x0000:
-			for (int i = 0; i < 64 * 32; ++i)
-				Chip8->videoMemory[i] = 0;
-			Chip8->refreshScreen = true;
-			break;
-		
-		//The interpreter sets the program counter to the address at the top of the stack, then subtracts 1 from the stack pointer.
-		case 0x000E:         
-			Chip8->pc = Chip8->stack[--Chip8->sp];
-			break;
- 
-		default:
-			Chip8CPUNULL(Chip8);        
-	}
+	Chip8->pc = Chip8->stack[--Chip8->sp];
+}
+
+/**
+* Scroll display 4 pixels right (Super Chip-8)
+* 
+*
+* @param Chip8 Address of the Chip8CPU object
+* @return Nothing.
+*/
+void Chip8OpCode00FB(Chip8CPU *Chip8)
+{
+	Chip8->videoMemory += 4;
+}
+
+/**
+* Scroll display 4 pixels left (Super Chip-8)
+* 
+*
+* @param Chip8 Address of the Chip8CPU object
+* @return Nothing.
+*/
+void Chip8OpCode00FC(Chip8CPU *Chip8)
+{
+	Chip8->videoMemory -= 4;
+}
+
+/**
+* Exit CHIP interpreter (Super Chip-8)
+* 
+*
+* @param Chip8 Address of the Chip8CPU object
+* @return Nothing.
+*/
+void Chip8OpCode00FD(Chip8CPU *Chip8)
+{
+	//dont really do anything hre, reset i guess
+	Chip8Reset(Chip8);
+}
+
+/**
+* Disable extended screen mode (Super Chip-8)
+* 
+*
+* @param Chip8 Address of the Chip8CPU object
+* @return Nothing.
+*/
+void Chip8OpCode00FE(Chip8CPU *Chip8)
+{
+	Chip8->extendedGraphicsMode = false;
+}
+
+/**
+* Enable extended screen mode for full-screen graphics (Super Chip-8)
+* 
+*
+* @param Chip8 Address of the Chip8CPU object
+* @return Nothing.
+*/
+void Chip8OpCode00FF(Chip8CPU *Chip8)
+{
+	Chip8->extendedGraphicsMode = true;
 }
 
 /**
@@ -614,18 +756,44 @@ void Chip8OpCodeDXYN(Chip8CPU *Chip8)
 	unsigned short height = Chip8->opcode & 0x000F;
 	unsigned short pixel;
 	Chip8->V[0xF] = 0;
-	for (int yline = 0; yline < height; yline++)
+
+	//super Chip-8
+	if (height == 0)
 	{
-		pixel = Chip8->memory[Chip8->I + yline];
-		for (int xline = 0; xline < 8; xline++)
+		height = 32;
+		for (int yline = 0; yline < height; yline += 2)
 		{
-			if ((pixel & (0x80 >> xline)) != 0)
+			//pixel = Chip8->memory[Chip8->I + yline];
+			pixel = (Chip8->memory[Chip8->I + yline] << 8) | Chip8->memory[Chip8->I + yline + 1];
+			for (int xline = 0; xline < 16; xline++)
 			{
-				if (Chip8->videoMemory[(x + xline + ((y + yline) * 64))] == 1)
+				if ((pixel & (0x8000 >> xline)) != 0)
 				{
-					Chip8->V[0xF] = 1;                                    
+					if (Chip8->videoBuffer[(x + xline + ((y + (yline / 2)) * 128))] == 1)
+					{
+						Chip8->V[0xF] = 1;                                    
+					}
+					Chip8->videoBuffer[(x + xline + ((y + (yline / 2)) * 128))] ^= 1;
 				}
-				Chip8->videoMemory[x + xline + ((y + yline) * 64)] ^= 1;
+			}
+		}
+	}
+	//Chip-8
+	else
+	{
+		for (int yline = 0; yline < height; yline++)
+		{
+			pixel = Chip8->memory[Chip8->I + yline];
+			for (int xline = 0; xline < 8; xline++)
+			{
+				if ((pixel & (0x80 >> xline)) != 0)
+				{
+					if (Chip8->videoBuffer[(x + xline + ((y + yline) * 64))] == 1)
+					{
+						Chip8->V[0xF] = 1;                                    
+					}
+					Chip8->videoBuffer[x + xline + ((y + yline) * 64)] ^= 1;
+				}
 			}
 		}
 	}
@@ -696,6 +864,10 @@ void Chip8OpCodeFXXX(Chip8CPU *Chip8)
 			Chip8OpCodeFX29(Chip8);
 			break;
 		
+		case 0x0030:
+			Chip8OpCodeFX30(Chip8);
+			break;
+
 		case 0x0033: 
 			Chip8OpCodeFX33(Chip8);
 			break;
@@ -706,6 +878,14 @@ void Chip8OpCodeFXXX(Chip8CPU *Chip8)
 		
 		case 0x0065: 
 			Chip8OpCodeFX65(Chip8);
+			break;
+		
+		case 0x0075: 
+			Chip8OpCodeFX75(Chip8);
+			break;
+
+		case 0x0085: 
+			Chip8OpCodeFX85(Chip8);
 			break;
 		
 		default:
@@ -803,6 +983,18 @@ void Chip8OpCodeFX29(Chip8CPU *Chip8)
 }
 
 /**
+* Set I = location of 10 bit sprite for digit Vx. (Super Chip-8)
+* The value of I is set to the location for the hexadecimal sprite corresponding to the value of Vx. 
+*
+* @param Chip8 Address of the Chip8CPU object
+* @return Nothing.
+*/
+void Chip8OpCodeFX30(Chip8CPU *Chip8)
+{
+	Chip8->I = Chip8->V[(Chip8->opcode & 0x0F00) >> 8] * 0x5;
+}
+
+/**
 * Store BCD representation of Vx in memory locations I, I+1, and I+2.
 * The interpreter takes the decimal value of Vx, 
 * and places the hundreds digit in memory at location in I, 
@@ -846,4 +1038,32 @@ void Chip8OpCodeFX65(Chip8CPU *Chip8)
 		Chip8->V[i] = Chip8->memory[Chip8->I + i];
 	
 	Chip8->I += ((Chip8->opcode & 0x0F00) >> 8) + 1;
+}
+
+/**
+* Store V0..VX in R user flags (X <= 7) (Super Chip-8)
+*
+* @param Chip8 Address of the Chip8CPU object
+* @return Nothing.
+*/
+void Chip8OpCodeFX75(Chip8CPU *Chip8)
+{
+	for (int i = 0; i <= ((Chip8->opcode & 0x0F00) >> 8); i++ )
+	{
+		Chip8->R[i] = Chip8->V[i];
+	}
+}
+
+/**
+* Read V0..VX in R user flags (X <= 7) (Super Chip-8)
+*
+* @param Chip8 Address of the Chip8CPU object
+* @return Nothing.
+*/
+void Chip8OpCodeFX85(Chip8CPU *Chip8)
+{
+	for (int i = 0; i <= ((Chip8->opcode & 0x0F00) >> 8); i++ )
+	{
+		Chip8->V[i] = Chip8->R[i];
+	}
 }

@@ -20,8 +20,8 @@
 * @version April 2, 2017
 */
 
-#ifndef Chip8_H
-#define Chip8_H
+#ifndef CHIP8_H
+#define CHIP8_H
 
 #include <stdbool.h>
 
@@ -174,10 +174,10 @@ void Chip8EmulateCycle(Chip8CPU *Chip8);
  **********************************************************************************************/
 
 //Array of function pointers to the OpCodes
-void (*Chip8OpcodeTable[16])(Chip8CPU *Chip8);
+//void (*Chip8OpcodeTable[16])(Chip8CPU *Chip8);
 
 //Array of Function pointers to the 8???? OpCodes
-void (*Chip8ArithmeticOpcodeTable[16])(Chip8CPU *Chip8);
+//void (*Chip8ArithmeticOpcodeTable[16])(Chip8CPU *Chip8);
 
 /**
 * If this OPCODE is called then something went wrong
@@ -438,4 +438,97 @@ void Chip8OpCodeDXYN(Chip8CPU *Chip8);
 */
 void Chip8OpCodeEXXX(Chip8CPU *Chip8);
 
-#endif
+
+/**
+* A Switch to call the FXXX OpCodes
+* I dont really see a better way to seperate them out.
+*
+* @param Chip8 Address of the Chip8CPU object
+* @return Nothing.
+*/
+void Chip8OpCodeFXXX(Chip8CPU *Chip8);
+
+/**
+* Set Vx = delay timer value.
+* The value of DT is placed into Vx.
+*
+* @param Chip8 Address of the Chip8CPU object
+* @return Nothing.
+*/
+void Chip8OpCodeFX07(Chip8CPU *Chip8);
+
+/**
+* Wait for a key press, store the value of the key in Vx.
+* All execution stops until a key is pressed, then the value of that key is stored in Vx.
+*
+* @param Chip8 Address of the Chip8CPU object
+* @return Nothing.
+*/
+void Chip8OpCodeFX0A(Chip8CPU *Chip8);
+
+/**
+* Set delay timer = Vx.
+* DT is set equal to the value of Vx.
+*
+* @param Chip8 Address of the Chip8CPU object
+* @return Nothing.
+*/
+void Chip8OpCodeFX15(Chip8CPU *Chip8);
+
+/**
+* Set sound timer = Vx.
+* ST is set equal to the value of Vx.
+*
+* @param Chip8 Address of the Chip8CPU object
+* @return Nothing.
+*/
+void Chip8OpCodeFX18(Chip8CPU *Chip8);
+
+/**
+* Set I = I + Vx.
+* The values of I and Vx are added, and the results are stored in I.
+*
+* @param Chip8 Address of the Chip8CPU object
+* @return Nothing.
+*/
+void Chip8OpCodeFX1E(Chip8CPU *Chip8);
+
+/**
+* Set I = location of sprite for digit Vx.
+* The value of I is set to the location for the hexadecimal sprite corresponding to the value of Vx. 
+*
+* @param Chip8 Address of the Chip8CPU object
+* @return Nothing.
+*/
+void Chip8OpCodeFX29(Chip8CPU *Chip8);
+
+/**
+* Store BCD representation of Vx in memory locations I, I+1, and I+2.
+* The interpreter takes the decimal value of Vx, 
+* and places the hundreds digit in memory at location in I, 
+* the tens digit at location I+1, and the ones digit at location I+2.
+*
+* @param Chip8 Address of the Chip8CPU object
+* @return Nothing.
+*/
+void Chip8OpCodeFX33(Chip8CPU *Chip8);
+
+/**
+* Store registers V0 through Vx in memory starting at location I.
+* The interpreter copies the values of registers V0 through Vx into memory, starting at the address in I.
+*
+* @param Chip8 Address of the Chip8CPU object
+* @return Nothing.
+*/
+void Chip8OpCodeFX55(Chip8CPU *Chip8);
+
+/**
+* Read registers V0 through Vx from memory starting at location I.
+* The interpreter reads values from memory starting at location I into registers V0 through Vx.
+*
+* @param Chip8 Address of the Chip8CPU object
+* @return Nothing.
+*/
+void Chip8OpCodeFX65(Chip8CPU *Chip8);
+
+#endif //header guard CHIP8_H

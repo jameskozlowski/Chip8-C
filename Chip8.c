@@ -115,7 +115,7 @@ void (*Chip8OpcodeTable[16])(Chip8CPU *Chip8) =
 	Chip8OpCodeCXKK, 
 	Chip8OpCodeDXYN, 
 	Chip8OpCodeEXXX, 
-	Chip8CPUNULL
+	Chip8OpCodeFXXX				//hard to split this one up in a meaningfull way
 };
 
 //Array of Function pointers to the 8???? OpCodes
@@ -187,7 +187,8 @@ bool Chip8LoadRom(Chip8CPU *Chip8, char *filename)
 
     while (!feof(file))
     {
-        fread(&b, 1, 1, file);
+        fread(&b, sizeof(char), 1, file);
+		//printf("%i", b);
         Chip8->memory[i++] = b;
     }
 	
@@ -205,8 +206,8 @@ bool Chip8LoadRom(Chip8CPU *Chip8, char *filename)
 void Chip8EmulateCycle(Chip8CPU *Chip8)
 {
     Chip8->opcode = Chip8->memory[Chip8->pc++] << 8 | Chip8->memory[Chip8->pc++];
-
-    Chip8OpcodeTable[(Chip8->opcode&0xF000)>>12](Chip8);
+	//printf("opcode %i\n", Chip8->opcode );
+    (*Chip8OpcodeTable[(Chip8->opcode&0xF000)>>12])(Chip8);
 }
 
 /*************************************************************************************************
@@ -222,7 +223,7 @@ void Chip8EmulateCycle(Chip8CPU *Chip8)
 */
 void Chip8CPUNULL(Chip8CPU *Chip8)
 {
-	// Do Nothing
+	printf("bad opcode\n");
 }
 
 /**
@@ -247,7 +248,7 @@ void Chip8OpCode00EX(Chip8CPU *Chip8)
 		
 		//The interpreter sets the program counter to the address at the top of the stack, then subtracts 1 from the stack pointer.
 		case 0x000E:         
-			Chip8->pc = Chip8->stack[Chip8->sp--];
+			Chip8->pc = Chip8->stack[--Chip8->sp];
 			break;
  
 		default:
@@ -615,4 +616,191 @@ void Chip8OpCodeEXXX(Chip8CPU *Chip8)
 		default:
 			Chip8CPUNULL(Chip8); 	
 	}	
+}
+
+/**
+* A Switch to call the FXXX OpCodes
+* I dont really see a better way to seperate them out.
+*
+* @param Chip8 Address of the Chip8CPU object
+* @return Nothing.
+*/
+void Chip8OpCodeFXXX(Chip8CPU *Chip8)
+{
+	switch(Chip8->opcode & 0x00FF)
+	{
+		case 0x0007: 
+			Chip8OpCodeFX07(Chip8);
+			break;
+		
+		case 0x000A: 
+			Chip8OpCodeFX0A(Chip8);
+			break;
+		
+		case 0x0015: 
+			Chip8OpCodeFX15(Chip8);
+			break;
+		
+		case 0x0018: 
+			Chip8OpCodeFX18(Chip8);
+			break;
+		
+		case 0x001E: 
+			Chip8OpCodeFX1E(Chip8);
+			break;
+		
+		case 0x0029: 
+			Chip8OpCodeFX29(Chip8);
+			break;
+		
+		case 0x0033: 
+			Chip8OpCodeFX33(Chip8);
+			break;
+			
+		case 0x0055: 
+			Chip8OpCodeFX55(Chip8);
+			break;
+		
+		case 0x0065: 
+			Chip8OpCodeFX65(Chip8);
+			break;
+		
+		default:
+			Chip8CPUNULL(Chip8);
+	}	
+}
+
+/**
+* Set Vx = delay timer value.
+* The value of DT is placed into Vx.
+*
+* @param Chip8 Address of the Chip8CPU object
+* @return Nothing.
+*/
+void Chip8OpCodeFX07(Chip8CPU *Chip8)
+{
+	Chip8->V[(Chip8->opcode & 0x0F00) >> 8] = Chip8->delayTimer;
+}
+
+/**
+* Wait for a key press, store the value of the key in Vx.
+* All execution stops until a key is pressed, then the value of that key is stored in Vx.
+*
+* @param Chip8 Address of the Chip8CPU object
+* @return Nothing.
+*/
+void Chip8OpCodeFX0A(Chip8CPU *Chip8)
+{
+	bool keyPress = false;
+
+	for(int i = 0; i < 16; ++i)
+	{
+		if(Chip8->key[i] != 0)
+		{
+			Chip8->V[(Chip8->opcode & 0x0F00) >> 8] = i;
+			keyPress = true;
+		}
+	}
+	// If we didn't received a keypress, skip this cycle and try again.
+	if(!keyPress)						
+		Chip8->pc -= 2;
+}
+
+/**
+* Set delay timer = Vx.
+* DT is set equal to the value of Vx.
+*
+* @param Chip8 Address of the Chip8CPU object
+* @return Nothing.
+*/
+void Chip8OpCodeFX15(Chip8CPU *Chip8)
+{
+	Chip8->delayTimer = Chip8->V[(Chip8->opcode & 0x0F00) >> 8];
+}
+
+/**
+* Set sound timer = Vx.
+* ST is set equal to the value of Vx.
+*
+* @param Chip8 Address of the Chip8CPU object
+* @return Nothing.
+*/
+void Chip8OpCodeFX18(Chip8CPU *Chip8)
+{
+	Chip8->soundTimer = Chip8->V[(Chip8->opcode & 0x0F00) >> 8];
+}
+
+/**
+* Set I = I + Vx.
+* The values of I and Vx are added, and the results are stored in I.
+*
+* @param Chip8 Address of the Chip8CPU object
+* @return Nothing.
+*/
+void Chip8OpCodeFX1E(Chip8CPU *Chip8)
+{
+	if (Chip8->I + Chip8->V[(Chip8->opcode & 0x0F00) >> 8] > 0xFFF)	// VF is set to 1 when range overflow (I+VX>0xFFF), and 0 when there isn't.
+		Chip8->V[0xF] = 1;
+	else
+		Chip8->V[0xF] = 0;
+
+	Chip8->I += Chip8->V[(Chip8->opcode & 0x0F00) >> 8];
+}
+
+/**
+* Set I = location of sprite for digit Vx.
+* The value of I is set to the location for the hexadecimal sprite corresponding to the value of Vx. 
+*
+* @param Chip8 Address of the Chip8CPU object
+* @return Nothing.
+*/
+void Chip8OpCodeFX29(Chip8CPU *Chip8)
+{
+	Chip8->I = Chip8->V[(Chip8->opcode & 0x0F00) >> 8] * 0x5;
+}
+
+/**
+* Store BCD representation of Vx in memory locations I, I+1, and I+2.
+* The interpreter takes the decimal value of Vx, 
+* and places the hundreds digit in memory at location in I, 
+* the tens digit at location I+1, and the ones digit at location I+2.
+*
+* @param Chip8 Address of the Chip8CPU object
+* @return Nothing.
+*/
+void Chip8OpCodeFX33(Chip8CPU *Chip8)
+{
+	Chip8->memory[Chip8->I]     = (Chip8->V[(Chip8->opcode & 0x0F00) >> 8] / 100);
+	Chip8->memory[Chip8->I + 1] = (Chip8->V[(Chip8->opcode & 0x0F00) >> 8] / 10) % 10;
+	Chip8->memory[Chip8->I + 2] = (Chip8->V[(Chip8->opcode & 0x0F00) >> 8] % 100) % 10;
+}
+
+/**
+* Store registers V0 through Vx in memory starting at location I.
+* The interpreter copies the values of registers V0 through Vx into memory, starting at the address in I.
+*
+* @param Chip8 Address of the Chip8CPU object
+* @return Nothing.
+*/
+void Chip8OpCodeFX55(Chip8CPU *Chip8)
+{
+	for (int i = 0; i <= (Chip8->opcode & 0x0F00) >> 8; ++i)
+		Chip8->memory[Chip8->I + i] = Chip8->V[i];
+	
+	Chip8->I += ((Chip8->opcode & 0x0F00) >> 8) + 1;
+}
+
+/**
+* Read registers V0 through Vx from memory starting at location I.
+* The interpreter reads values from memory starting at location I into registers V0 through Vx.
+*
+* @param Chip8 Address of the Chip8CPU object
+* @return Nothing.
+*/
+void Chip8OpCodeFX65(Chip8CPU *Chip8)
+{
+	for (int i = 0; i <= (Chip8->opcode & 0x0F00) >> 8; ++i)
+		Chip8->V[i] = Chip8->memory[Chip8->I + i];
+	
+	Chip8->I += ((Chip8->opcode & 0x0F00) >> 8) + 1;
 }

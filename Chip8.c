@@ -24,12 +24,36 @@
 #include "Chip8.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
+#include <sys/timeb.h>
 
-//returns a random number 
-int Random(int max) 
-{ 
-	return (int)(rand()) / max * 14620 + 1; 
-}     
+
+/**
+* Returns time millicount used for get milliSpan
+*
+* @return millicount.
+*/
+unsigned long Chip8getMilliCount()
+{
+	struct timeb tb;
+	ftime(&tb);
+	int nCount = tb.millitm + (tb.time & 0xfffff) * 1000;
+	return nCount;
+}
+
+/**
+* Returns time span from nTimeStart
+*
+* @param nTimeStart Time to measure span from
+* @return time span.
+*/
+unsigned long  Chip8getMilliSpan(unsigned long nTimeStart)
+{
+	int nSpan = Chip8getMilliCount() - nTimeStart;
+	if(nSpan < 0)
+		nSpan += 0x100000 * 1000;
+	return nSpan;
+}
 
 /**********************************************************************************************
  * This is the Chip 8 font set. Each number or character is 4 pixels wide and 5 pixel high.
@@ -156,6 +180,7 @@ void Chip8Reset(Chip8CPU *Chip8)
 	Chip8->soundTimer = 0;
 	Chip8->refreshScreen = false;
 	Chip8->playBeep = false;
+	Chip8->lastTick = Chip8->lastTick2 = 0;
 	for(int i = 0; i < 16; ++i)
 		Chip8->V[i] = 0;
 	for(int i = 0; i < 16; ++i)
@@ -205,9 +230,27 @@ bool Chip8LoadRom(Chip8CPU *Chip8, char *filename)
 */
 void Chip8EmulateCycle(Chip8CPU *Chip8)
 {
+	if (Chip8getMilliSpan(Chip8->lastTick) < 1)
+		return;
+	Chip8->lastTick = Chip8getMilliCount();
+
     Chip8->opcode = Chip8->memory[Chip8->pc++] << 8 | Chip8->memory[Chip8->pc++];
 	//printf("opcode %i\n", Chip8->opcode );
     (*Chip8OpcodeTable[(Chip8->opcode&0xF000)>>12])(Chip8);
+
+	if (Chip8getMilliSpan(Chip8->lastTick2) > 6)
+	{
+		Chip8->lastTick2 = Chip8getMilliCount();
+		if(Chip8->delayTimer > 0)
+			--Chip8->delayTimer;
+ 
+		if(Chip8->soundTimer > 0)
+		{
+			if(Chip8->soundTimer == 1)
+				Chip8->playBeep = true;
+			--Chip8->soundTimer;
+		}
+	}
 }
 
 /*************************************************************************************************

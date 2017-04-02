@@ -73,12 +73,7 @@ typedef struct
      *(0,31)      (63,31)*
      *********************
     */
-    unsigned char videoBuffer[128 * 64];
-
-    //points to the current spot in the video memory
-    //set to videoBuffer[0] for chip-8
-    //moves around for Super Chip-8 Extended mode
-    unsigned char *videoMemory;
+    unsigned char videoMemory[128 * 64];
 
     //Super Chip-8 extended graphics enabled
     bool extendedGraphicsMode;

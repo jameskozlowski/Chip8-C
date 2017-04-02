@@ -18,7 +18,8 @@ g++ Chip8.o Example.o -o Chip8Example -lsfml-graphics -lsfml-window -lsfml-syste
 Have a look at the source files, they are well documented
 
 ## Coming Soon ##
-* Add Super Chip-8 Opcodes
+* Build a Compiler
+* Build a Decompiler
 * Enable load and save states
 * build in a simple debugger
 

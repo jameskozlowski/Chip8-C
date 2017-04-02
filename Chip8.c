@@ -23,6 +23,7 @@
 
 #include "Chip8.h"
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <time.h>
 #include <sys/timeb.h>
@@ -199,18 +200,19 @@ void Chip8Reset(Chip8CPU *Chip8)
 	Chip8->refreshScreen = false;
 	Chip8->playBeep = false;
 	Chip8->lastTick = Chip8->lastTick2 = 0;
-	for(int i = 0; i < 16; ++i)
-		Chip8->V[i] = 0;
-	for(int i = 0; i < 16; ++i)
-		Chip8->key[i] = 0;		
-	for (int i = 0; i < 64 * 32; ++i)
-		Chip8->videoBuffer[i] = 0;
+
+	memset(Chip8->V, 0, 16);
+	memset(Chip8->R, 0, 8);
+	memset(Chip8->key, 0, 16);
+	memset(Chip8->videoMemory, 0, 8192);
+	memset(Chip8->memory, 0, 4096);
+
+
 	Chip8->refreshScreen = false;
+
 	for(int i = 0; i < 240; ++i)
 		Chip8->memory[i] = chip8_fontset[i];
 
-	//set the screen pointer to the top left for normal mode
-	Chip8->videoMemory = Chip8->videoBuffer;
 }
 
 /**
@@ -289,7 +291,7 @@ void Chip8EmulateCycle(Chip8CPU *Chip8)
 */
 void Chip8CPUNULL(Chip8CPU *Chip8)
 {
-	printf("bad opcode\n");
+	printf("bad opcode: %04X\n", Chip8->opcode );
 }
 
 
@@ -350,9 +352,9 @@ void Chip8OpCode00XX(Chip8CPU *Chip8)
 */
 void Chip8OpCode00E0(Chip8CPU *Chip8)
 {
-	for (int i = 0; i < 64 * 32; ++i)
-		Chip8->videoBuffer[i] = 0;
-	Chip8->refreshScreen = true;
+	
+	memset(Chip8->videoMemory, 0, 8192);
+	//Chip8->refreshScreen = true;
 }
 
 /**
@@ -364,7 +366,29 @@ void Chip8OpCode00E0(Chip8CPU *Chip8)
 */
 void Chip8OpCode00CN(Chip8CPU *Chip8)
 {
-	Chip8->videoMemory += 128 * (Chip8->opcode & 0x000F);
+	
+	int screenx = 64;
+	int screeny = 32;
+
+	if (Chip8->extendedGraphicsMode == true)
+	{
+		screenx = 128;
+		screeny = 64;
+	}
+
+	int n = (Chip8->opcode & 0x000F);
+
+    for (int i = screeny; i >= n; --i)
+    {
+        int start = i *screeny;
+        for (auto j = start; j < (start + screenx); ++j)
+        {
+            Chip8->videoMemory[j] = Chip8->videoMemory[j - (screenx * n)];
+        }
+	}
+
+	memset(Chip8->videoMemory, 0, (n) * screenx);
+	//Chip8->refreshScreen = true;
 }
 
 /**
@@ -389,7 +413,27 @@ void Chip8OpCode00EE(Chip8CPU *Chip8)
 */
 void Chip8OpCode00FB(Chip8CPU *Chip8)
 {
-	Chip8->videoMemory += 4;
+
+	int screenx = 64;
+	int screeny = 32;
+
+	if (Chip8->extendedGraphicsMode == true)
+	{
+		screenx = 128;
+		screeny = 64;
+	}
+
+    for (int i = 0; i < screeny; ++i)
+    {
+        int start = i * screenx;
+        for (auto j = start + (screenx - 1); j >= (start + 4); --j)
+        {
+            Chip8->videoMemory[j] = Chip8->videoMemory[j - 4];
+        }
+
+        memset(Chip8->videoMemory + start, 0, 4);
+	}
+	Chip8->refreshScreen = true;
 }
 
 /**
@@ -401,7 +445,27 @@ void Chip8OpCode00FB(Chip8CPU *Chip8)
 */
 void Chip8OpCode00FC(Chip8CPU *Chip8)
 {
-	Chip8->videoMemory -= 4;
+
+	int screenx = 64;
+	int screeny = 32;
+
+	if (Chip8->extendedGraphicsMode == true)
+	{
+		screenx = 128;
+		screeny = 64;
+	}
+
+    for (auto i = 0; i < screeny; ++i)
+    {
+        auto start = i * screenx;
+        for (auto j = start; j < start + (screenx - 4); ++j)
+        {
+            Chip8->videoMemory[j] = Chip8->videoMemory[j + 4];
+        }
+
+        memset(Chip8->videoMemory + start + (screenx - 5), 0, 4);
+	}
+	Chip8->refreshScreen = true;
 }
 
 /**
@@ -757,6 +821,15 @@ void Chip8OpCodeDXYN(Chip8CPU *Chip8)
 	unsigned short pixel;
 	Chip8->V[0xF] = 0;
 
+	int screenx = 64;
+	int screeny = 32;
+
+	if (Chip8->extendedGraphicsMode == true)
+	{
+		screenx = 128;
+		screeny = 64;
+	}
+
 	//super Chip-8
 	if (height == 0)
 	{
@@ -769,11 +842,11 @@ void Chip8OpCodeDXYN(Chip8CPU *Chip8)
 			{
 				if ((pixel & (0x8000 >> xline)) != 0)
 				{
-					if (Chip8->videoBuffer[(x + xline + ((y + (yline / 2)) * 128))] == 1)
+					if (Chip8->videoMemory[(x + xline + ((y + (yline / 2)) * screenx))] == 1)
 					{
 						Chip8->V[0xF] = 1;                                    
 					}
-					Chip8->videoBuffer[(x + xline + ((y + (yline / 2)) * 128))] ^= 1;
+					Chip8->videoMemory[(x + xline + ((y + (yline / 2)) * screenx))] ^= 1;
 				}
 			}
 		}
@@ -788,11 +861,11 @@ void Chip8OpCodeDXYN(Chip8CPU *Chip8)
 			{
 				if ((pixel & (0x80 >> xline)) != 0)
 				{
-					if (Chip8->videoBuffer[(x + xline + ((y + yline) * 64))] == 1)
+					if (Chip8->videoMemory[(x + xline + ((y + yline) * screenx))] == 1)
 					{
 						Chip8->V[0xF] = 1;                                    
 					}
-					Chip8->videoBuffer[x + xline + ((y + yline) * 64)] ^= 1;
+					Chip8->videoMemory[x + xline + ((y + yline) * screenx)] ^= 1;
 				}
 			}
 		}

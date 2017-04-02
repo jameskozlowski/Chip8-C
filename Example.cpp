@@ -127,7 +127,7 @@ int main(int argc, char **argv)
 
 		if (mychip8.refreshScreen == true)
 		{
-			//window.clear();
+			window.clear();
 			DrawScreen(&window);
 			window.display();
 			mychip8.refreshScreen = false;

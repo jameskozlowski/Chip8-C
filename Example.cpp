@@ -21,7 +21,7 @@ int main(int argc, char **argv)
 {
 	Chip8Reset(&mychip8);
 
-	if (Chip8LoadRom(&mychip8,"tetris.c8") == false)
+	if (argc != 2 || Chip8LoadRom(&mychip8,argv[1]) == false)
         cout << "Error loading file";
 
 	

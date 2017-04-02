@@ -102,8 +102,10 @@ typedef struct
     //Set to true if a beep needs to be played
     bool playBeep;
 
+    //used for chip-8 timing, please do not touch
     long lastTick;
 
+    //used for chip-8 timing, please do not touch
     long lastTick2;
 
 } Chip8CPU;
@@ -121,7 +123,7 @@ unsigned long Chip8getMilliCount();
 * @param nTimeStart Time to measure span from
 * @return time span.
 */
-unsigned long  Chip8getMilliSpan(unsigned long nTimeStart)
+unsigned long  Chip8getMilliSpan(unsigned long nTimeStart);
 
 /**
 * Resets the Chip8CPU to power on defaults

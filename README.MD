@@ -3,7 +3,7 @@ This version is a port for a c++ version I made a while ago. I cleaned up the co
 
 I wanted to port this over to a ARM Cortex-M0 MCU but was running into lots of problems, so I decided to first make a port to C for the desktop.
 
-I also wanted to work on a 6502 Emulator but wanted to clean this up firsts as a starting point for the larger more complicated emulator
+I also wanted to work on a 6502 Emulator but wanted to clean this up first as a starting point for the larger more complicated emulator
 
 ## Example ##
 I have included a simple example using SFML libary for graphics/input
@@ -11,7 +11,7 @@ you can compile it on linux using the folowing commands
 ```
 g++ -c Example.cpp Chip8.c
 g++ Chip8.o Example.o -o Chip8Example -lsfml-graphics -lsfml-window -lsfml-system
-./Chip8Example
+./Chip8Example gamefile.c8
 ```
 
 ## Documentation ##
@@ -20,7 +20,7 @@ Have a look at the source files, they are well documented
 ## Coming Soon ##
 * Build a Compiler
 * Build a Decompiler
-* build in a simple debugger
+* add a simple debugger
 
 ## About the Chip-8 interpreter ##
 Chip-8 is a simple, interpreted, programming language which was first used on some do-it-yourself computer systems 

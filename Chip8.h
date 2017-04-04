@@ -180,51 +180,51 @@ void Chip8EmulateCycle(Chip8CPU *Chip8);
  * CHIP-8 has 35 opcodes, which are all two bytes long and stored big-endian. 
  * The opcodes are listed below, in hexadecimal and with the following symbols:
  *
- * OPCODE 	DISC (Instructions marked with (*) are new in SUPER-CHIP.)
+ * OPCODE     DISC (Instructions marked with (*) are new in SUPER-CHIP.)
  * --------------------------------------------------------------------------------------------
  * 00CN*    Scroll display N lines down
- * 0NNN    	RCA 1802 program at address NNN. Not necessary for most ROMs.
- * 00E0 	Clears the screen.
- * 00EE 	Returns from a subroutine.
+ * 0NNN        RCA 1802 program at address NNN. Not necessary for most ROMs.
+ * 00E0     Clears the screen.
+ * 00EE     Returns from a subroutine.
  * 00FB*    Scroll display 4 pixels right
  * 00FC*    Scroll display 4 pixels left
  * 00FD*    Exit CHIP interpreter
  * 00FE*    Disable extended screen mode
  * 00FF*    Enable extended screen mode for full-screen graphics
- * 1NNN 	Jumps to address NNN.
- * 2NNN 	Calls subroutine at NNN.
- * 3XNN 	Skips the next instruction if VX equals NN. 
- * 4XNN 	Skips the next instruction if VX doesn't equal NN. 
- * 5XY0 	Skips the next instruction if VX equals VY. 
- * 6XNN 	Sets VX to NN.
- * 7XNN 	Adds NN to VX.
- * 8XY0 	Sets VX to the value of VY.
- * 8XY1 	Sets VX to VX or VY. (Bitwise OR operation) VF is reset to 0.
- * 8XY2 	Sets VX to VX and VY. (Bitwise AND operation) VF is reset to 0.
- * 8XY3 	Sets VX to VX xor VY. VF is reset to 0.
- * 8XY4 	Adds VY to VX. VF is set to 1 when there's a carry, and to 0 when there isn't.
- * 8XY5 	VY is subtracted from VX. VF is set to 0 when there's a borrow, and 1 when there isn't.
- * 8XY6 	Shifts VX right by one. VF is set to the value of the least significant bit of VX before the shift.
- * 8XY7 	Sets VX to VY minus VX. VF is set to 0 when there's a borrow, and 1 when there isn't.
- * 8XYE 	Shifts VX left by one. VF is set to the value of the most significant bit of VX before the shift.
- * 9XY0 	Skips the next instruction if VX doesn't equal VY. 
- * ANNN 	Sets I to the address NNN.
- * BNNN 	Jumps to the address NNN plus V0.
- * CXNN 	Sets VX to the result of a bitwise and operation on a random number and NN.
+ * 1NNN     Jumps to address NNN.
+ * 2NNN     Calls subroutine at NNN.
+ * 3XNN     Skips the next instruction if VX equals NN. 
+ * 4XNN     Skips the next instruction if VX doesn't equal NN. 
+ * 5XY0     Skips the next instruction if VX equals VY. 
+ * 6XNN     Sets VX to NN.
+ * 7XNN     Adds NN to VX.
+ * 8XY0     Sets VX to the value of VY.
+ * 8XY1     Sets VX to VX or VY. (Bitwise OR operation) VF is reset to 0.
+ * 8XY2     Sets VX to VX and VY. (Bitwise AND operation) VF is reset to 0.
+ * 8XY3     Sets VX to VX xor VY. VF is reset to 0.
+ * 8XY4     Adds VY to VX. VF is set to 1 when there's a carry, and to 0 when there isn't.
+ * 8XY5     VY is subtracted from VX. VF is set to 0 when there's a borrow, and 1 when there isn't.
+ * 8XY6     Shifts VX right by one. VF is set to the value of the least significant bit of VX before the shift.
+ * 8XY7     Sets VX to VY minus VX. VF is set to 0 when there's a borrow, and 1 when there isn't.
+ * 8XYE     Shifts VX left by one. VF is set to the value of the most significant bit of VX before the shift.
+ * 9XY0     Skips the next instruction if VX doesn't equal VY. 
+ * ANNN     Sets I to the address NNN.
+ * BNNN     Jumps to the address NNN plus V0.
+ * CXNN     Sets VX to the result of a bitwise and operation on a random number and NN.
  * DXYN*    Show N-byte sprite from M(I) at coords (VX,VY), VF :=
  *          collision. If N=0 and extended mode, show 16x16 sprite.
- * EX9E 	Skips the next instruction if the key stored in VX is pressed. 
- * EXA1 	Skips the next instruction if the key stored in VX isn't pressed.
- * FX07 	Sets VX to the value of the delay timer.
- * FX0A 	A key press is awaited, and then stored in VX. (Blocking Operation. All instruction halted until next key event)
- * FX15 	Sets the delay timer to VX.
- * FX18 	Sets the sound timer to VX.
- * FX1E 	Adds VX to I.[3]
- * FX29 	sets I to the location of the sprite for the character in VX. Characters 0-F  are represented by a 4x5 font.
+ * EX9E     Skips the next instruction if the key stored in VX is pressed. 
+ * EXA1     Skips the next instruction if the key stored in VX isn't pressed.
+ * FX07     Sets VX to the value of the delay timer.
+ * FX0A     A key press is awaited, and then stored in VX. (Blocking Operation. All instruction halted until next key event)
+ * FX15     Sets the delay timer to VX.
+ * FX18     Sets the sound timer to VX.
+ * FX1E     Adds VX to I.[3]
+ * FX29     sets I to the location of the sprite for the character in VX. Characters 0-F  are represented by a 4x5 font.
  * FX30*    Point I to 10-byte font sprite for digit VX (0..9)
- * FX33 	Stores the binary-coded decimal representation of VX, with the most significant of three digits at the address in I.
- * FX55 	Stores V0 to VX (including VX) in memory starting at address I.[4]
- * FX65 	Fills V0 to VX (including VX) with values from memory starting at address I.
+ * FX33     Stores the binary-coded decimal representation of VX, with the most significant of three digits at the address in I.
+ * FX55     Stores V0 to VX (including VX) in memory starting at address I.[4]
+ * FX65     Fills V0 to VX (including VX) with values from memory starting at address I.
  * FX75*    Store V0..VX in RPL user flags (X <= 7)
  * FX85*    Read V0..VX from RPL user flags (X <= 7) 
  **********************************************************************************************/

@@ -19,6 +19,7 @@ int width = 64 * modifier + 550;
 int height = 32 * modifier + 300;
 
 bool run = true;
+int displayMemLocation;
 
 int main(int argc, char **argv)
 {
@@ -51,10 +52,14 @@ int main(int argc, char **argv)
     while (window.isOpen())
     {
         sf::Event event;
+        //clear the keys
+        //memset (mychip8.key, 0, 16);
+        
         while (window.pollEvent(event))
         {
             if (event.type == sf::Event::Closed)
                 window.close();
+            
             else if (event.type == sf::Event::KeyPressed)
             {
                 if (event.key.code == sf::Keyboard::Escape)                
@@ -63,6 +68,14 @@ int main(int argc, char **argv)
                         run = !run;
                 else if (!run && event.key.code == sf::Keyboard::N)                
                         Chip8EmulateCycle(&mychip8);
+                else if (!run && event.key.code == sf::Keyboard::Down)                
+                        displayMemLocation++;
+                else if (!run && event.key.code == sf::Keyboard::Up)                
+                        displayMemLocation--;
+                else if (!run && event.key.code == sf::Keyboard::PageDown)                
+                        displayMemLocation += 16;
+                else if (!run && event.key.code == sf::Keyboard::PageUp)                
+                        displayMemLocation -= 16;                        
 
                 else if (event.key.code == sf::Keyboard::F1)
                     Chip8SaveState(&mychip8, (char*)"state.c8");
@@ -103,6 +116,7 @@ int main(int argc, char **argv)
                 else if (event.key.code == sf::Keyboard::V)
                     mychip8.key[0xF] = 1;
             }
+
             else if (event.type == sf::Event::KeyReleased)
             {
                 if (event.key.code == sf::Keyboard::Num1)
@@ -138,11 +152,17 @@ int main(int argc, char **argv)
                 else if (event.key.code == sf::Keyboard::V)
                     mychip8.key[0xF] = 0;
             }
+            
 
         }
 
         if(run)
+        {
             Chip8EmulateCycle(&mychip8);
+            displayMemLocation = mychip8.pc;
+        }
+        
+
 
         //if (mychip8.refreshScreen == true)
         //{
@@ -196,7 +216,8 @@ void DrawUI(sf::RenderWindow *window, sf::Font *font)
     mem << "MEMORY" << endl;
     mem << "Loc     " << "Value " << endl << "----------------------"<< endl;
     
-    for(int i = mychip8.pc - 20; i <= mychip8.pc + 20; i += 2)
+
+    for(int i = displayMemLocation - 20; i <= displayMemLocation + 20; i += 2)
         mem << hex << (int)i << ":\t" << hex << (int)mychip8.memory[i] << hex << (int)mychip8.memory[i + 1] << endl;
     
     sf::Text memText;
@@ -211,23 +232,47 @@ void DrawUI(sf::RenderWindow *window, sf::Font *font)
     memrectangle.setFillColor(sf::Color(1, 112, 10));
     memrectangle.setPosition(860, 323);
 
+    //printout keypad
+    stringstream keypadstream;
+    keypadstream << "KEYPAD INPUT" << endl;
+    keypadstream << "-----------------" << endl;
+    keypadstream << "| 1 | 2 | 3 | 4 |" << endl;
+    keypadstream << "| Q | W | E | R |" << endl;
+    keypadstream << "| A | S | D | F |" << endl;
+    keypadstream << "| Z | X | C | V |" << endl;
+    keypadstream << "-----------------" << endl;
+
+    sf::Text keypadText;
+    keypadText.setFont(*font); 
+    keypadText.setString(keypadstream.str());
+    keypadText.setCharacterSize(14);
+    keypadText.setColor(sf::Color(173, 173, 173));
+    keypadText.setPosition(20, 350);
+
     //print out instructions
     stringstream instructions;
     instructions << "Instruction" << endl;
     instructions << "---------------------" << endl;
     instructions << "F1: Save State" << endl;
+    instructions << "ESC: Quit" << endl;
     instructions << "F2: Load State" << endl << endl << endl;
     instructions << "SPACE: Pause Emulation" << endl;
-    instructions << "N:     Step to Next Line" << endl;
+    instructions << "N: Set break point" << endl << endl;;
+    instructions << "While paused:" << endl;
+    instructions << "Up/Down: Move memory location" << endl;
+    instructions << "PgUp/PgDn: Move memory location page " << endl;
+    instructions << "B: Set break point" << endl;
+    instructions << "M: Run from here" << endl;
 
     sf::Text instructionsText;
     instructionsText.setFont(*font); 
     instructionsText.setString(instructions.str());
-    instructionsText.setCharacterSize(20);
+    instructionsText.setCharacterSize(14);
     instructionsText.setColor(sf::Color(173, 173, 173));
-    instructionsText.setPosition(20, 350);
+    instructionsText.setPosition(250, 350);
 
     //draw eash object to the screen
+    window->draw(keypadText);
     window->draw(instructionsText);
     window->draw(memrectangle);
     window->draw(memText);

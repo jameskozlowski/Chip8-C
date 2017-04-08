@@ -1,3 +1,25 @@
+/**
+* Chip-8 emulator 
+* 
+* Chip-8 is a simple, interpreted, programming language which was first used on some do-it-yourself computer systems 
+* in the late 1970s and early 1980s. The COSMAC VIP, DREAM 6800, and ETI 660 computers are a few examples. 
+* These computers typically were designed to use a television as a display, had between 1 and 4K of RAM, and used a 16-key hexadecimal keypad for input. 
+* The interpreter took up only 512 bytes of memory, and programs, which were entered into the computer in hexadecimal, were even smaller.
+*
+* In the early 1990s, the Chip-8 language was revived by a man named Andreas Gustafsson. He created a Chip-8 interpreter for the HP48 graphing calculator, 
+* called Chip-48. The HP48 was lacking a way to easily make fast games at the time, and Chip-8 was the answer. Chip-48 later begat Super Chip-48, 
+* a modification of Chip-48 which allowed higher resolution graphics, as well as other graphical enhancements.
+*
+* Chip-48 inspired a whole new crop of Chip-8 interpreters for various platforms, including MS-DOS, Windows 3.1, Amiga, HP48, MSX, Adam, and ColecoVision.
+*
+* Technical Reference(used for this emulator): http://devernay.free.fr/hacks/chip8/C8TECH10.HTM
+*
+* More information: https://en.wikipedia.org/wiki/CHIP-8
+* 
+* @author  James Kozlowski
+* @version April 2, 2017
+*/
+
 #include <stdio.h>
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
@@ -9,27 +31,38 @@
 
 using namespace std;
 
+//the chip-8 object
 Chip8CPU mychip8;
 
-void DrawScreen(sf::RenderWindow *window);
-void DrawUI(sf::RenderWindow *window, sf::Font *font);
+//factor each pixel by this value
+const int modifier = 10;
 
-int modifier = 10;
-int width = 64 * modifier + 550;
-int height = 32 * modifier + 300;
+//set screen width and height
+const int width = 64 * modifier + 550;
+const int height = 32 * modifier + 300;
 
+//if true emulator is running, if false emulator is paused
 bool run = true;
+
+//used for displaying the memory in the debugger
 int displayMemLocation;
+
+//holds the breakpoint
+int breakpoint = -1;
 
 int main(int argc, char **argv)
 {
+    //reset the CPU
     Chip8Reset(&mychip8);
 
-
+    //try to load the rom file
     if (argc != 2 || Chip8LoadRom(&mychip8, argv[1]) == false)
+    {
         cout << "Error loading file";
+        return -1;
+    }
 
-    
+    //setup and open a window
     sf::ContextSettings settings;
     settings.depthBits = 0;
     settings.stencilBits = 0;
@@ -45,23 +78,23 @@ int main(int argc, char **argv)
     sf::Font font;
     if (!font.loadFromFile("DroidSansMono.ttf"))
     {
-        // error...
+        cout << "Error loading Font (DroidSansMono.ttf)";
     }
     
-
+    //main loop
     while (window.isOpen())
     {
         sf::Event event;
-        //clear the keys
-        //memset (mychip8.key, 0, 16);
         
         while (window.pollEvent(event))
         {
             if (event.type == sf::Event::Closed)
                 window.close();
             
+            //check for key presses
             else if (event.type == sf::Event::KeyPressed)
             {
+                //program/debugger keys
                 if (event.key.code == sf::Keyboard::Escape)                
                         exit(0);
                 else if (event.key.code == sf::Keyboard::Space)                
@@ -69,20 +102,33 @@ int main(int argc, char **argv)
                 else if (!run && event.key.code == sf::Keyboard::N)                
                         Chip8EmulateCycle(&mychip8);
                 else if (!run && event.key.code == sf::Keyboard::Down)                
-                        displayMemLocation++;
+                        displayMemLocation += 2;
                 else if (!run && event.key.code == sf::Keyboard::Up)                
-                        displayMemLocation--;
+                        displayMemLocation -= 2;
                 else if (!run && event.key.code == sf::Keyboard::PageDown)                
                         displayMemLocation += 16;
                 else if (!run && event.key.code == sf::Keyboard::PageUp)                
-                        displayMemLocation -= 16;                        
+                        displayMemLocation -= 16;       
+                else if (!run && event.key.code == sf::Keyboard::B)
+                {
+                    if (breakpoint == displayMemLocation)
+                        breakpoint = -1;
+                    else                
+                        breakpoint = displayMemLocation;
+                }
+                else if (!run && event.key.code == sf::Keyboard::M)
+                { 
+                    mychip8.pc = displayMemLocation;
+                    run = true;               
+                }
 
+                //load state keys
                 else if (event.key.code == sf::Keyboard::F1)
                     Chip8SaveState(&mychip8, (char*)"state.c8");
                 else if (event.key.code == sf::Keyboard::F2)
                     Chip8LoadState(&mychip8, (char*)"state.c8");
 
-
+                //gamepad keys
                 else if (event.key.code == sf::Keyboard::Num1)
                     mychip8.key[0x1] = 1;
                 else if (event.key.code == sf::Keyboard::Num2)
@@ -117,6 +163,7 @@ int main(int argc, char **argv)
                     mychip8.key[0xF] = 1;
             }
 
+            //key up events to clear gamepad keys
             else if (event.type == sf::Event::KeyReleased)
             {
                 if (event.key.code == sf::Keyboard::Num1)
@@ -152,26 +199,26 @@ int main(int argc, char **argv)
                 else if (event.key.code == sf::Keyboard::V)
                     mychip8.key[0xF] = 0;
             }
-            
-
         }
 
+        //if the emulator is not paused
         if(run)
         {
+            //if we are about to process the breakpoint line
+            if (mychip8.pc == breakpoint - 2)
+                run = false;
+            
             Chip8EmulateCycle(&mychip8);
             displayMemLocation = mychip8.pc;
         }
-        
 
+        //display the UI and game screen
+        window.clear();
+        DrawUI(&window, &font);
+        DrawGameScreen(&window);
+        window.display();
 
-        //if (mychip8.refreshScreen == true)
-        //{
-            window.clear();
-            DrawUI(&window, &font);
-            DrawScreen(&window);
-            window.display();
-            //mychip8.refreshScreen = false;
-        //}
+        //play a beep if needed (not done yet)
         if (mychip8.playBeep)
         {
             mychip8.playBeep = false;
@@ -180,6 +227,12 @@ int main(int argc, char **argv)
     return 0;
 }
 
+/**
+* Draws the UI
+*
+* @param window the SF::RenderWindow
+* @return none
+*/
 void DrawUI(sf::RenderWindow *window, sf::Font *font)
 {
     //print out box around screen
@@ -218,7 +271,10 @@ void DrawUI(sf::RenderWindow *window, sf::Font *font)
     
 
     for(int i = displayMemLocation - 20; i <= displayMemLocation + 20; i += 2)
-        mem << hex << (int)i << ":\t" << hex << (int)mychip8.memory[i] << hex << (int)mychip8.memory[i + 1] << endl;
+        if (i == breakpoint)
+            mem << "* " << hex << (int)i << ":\t" << hex << (int)mychip8.memory[i] << hex << (int)mychip8.memory[i + 1] << endl;
+        else
+            mem << "  " << hex << (int)i << ":\t" << hex << (int)mychip8.memory[i] << hex << (int)mychip8.memory[i + 1] << endl;
     
     sf::Text memText;
     memText.setFont(*font); 
@@ -253,16 +309,16 @@ void DrawUI(sf::RenderWindow *window, sf::Font *font)
     stringstream instructions;
     instructions << "Instruction" << endl;
     instructions << "---------------------" << endl;
-    instructions << "F1: Save State" << endl;
     instructions << "ESC: Quit" << endl;
-    instructions << "F2: Load State" << endl << endl << endl;
-    instructions << "SPACE: Pause Emulation" << endl;
-    instructions << "N: Set break point" << endl << endl;;
+    instructions << "F1: Save State" << endl;
+    instructions << "F2: Load State" << endl << endl;
+    instructions << "SPACE: Pause/Run Emulation" << endl;
+    instructions << "N: Setp forward" << endl << endl;
     instructions << "While paused:" << endl;
     instructions << "Up/Down: Move memory location" << endl;
     instructions << "PgUp/PgDn: Move memory location page " << endl;
     instructions << "B: Set break point" << endl;
-    instructions << "M: Run from here" << endl;
+    instructions << "M: Run from here (Not recomended)" << endl;
 
     sf::Text instructionsText;
     instructionsText.setFont(*font); 
@@ -280,13 +336,17 @@ void DrawUI(sf::RenderWindow *window, sf::Font *font)
     window->draw(rectangle);
 }
 
-void DrawScreen(sf::RenderWindow *window)
+/**
+* Draws the game screen in the game screen area
+*
+* @param window the SF::RenderWindow
+* @return none
+*/
+void DrawGameScreen(sf::RenderWindow *window)
 {
     int screeny = 32;
     int screenx = 64;
     int modifierFactor = modifier;
-
-
 
     if (mychip8.extendedGraphicsMode == true)
     {
@@ -309,24 +369,15 @@ void DrawScreen(sf::RenderWindow *window)
             
     sf::Image image;
     image.create(screenx, screeny, screen);
-    //image.loadFromMemory(screen, 32 * modifier * 64 * modifier);
 
     sf::Texture texture;
     texture.create(screenx, screeny);
     texture.update(image);
-    //
-    //texture.loadFromImage(image, sf::IntRect(0,0,32 * modifier, 64 * modifier));
 
     sf::Sprite sprite;
-    //image.loadFromMemory(screen, 32 * 64 * modifier * 4);
     sprite.setTexture(texture);
     sprite.setScale(modifierFactor,modifierFactor);
-    //sprite.SetImage(screen);
     sprite.setPosition(4,4);
+
     window->draw(sprite);
-
 }
-
-
-
-

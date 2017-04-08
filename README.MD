@@ -9,9 +9,9 @@ I also wanted to work on a 6502 Emulator but wanted to clean this up first as a 
 I have included a simple example using SFML libary for graphics/input
 you can compile it on linux using the folowing commands
 ```
-g++ -c Example.cpp Chip8.c
-g++ Chip8.o Example.o -o Chip8Example -lsfml-graphics -lsfml-window -lsfml-system
-./Chip8Example gamefile.c8
+g++ -c Chip8Emulator.cpp Chip8.c
+g++ Chip8.o Chip8Emulator.o -o Chip8Emulator -lsfml-graphics -lsfml-window -lsfml-system
+./Chip8Emulator gamefile.c8
 ```
 
 ## Documentation ##
@@ -20,7 +20,7 @@ Have a look at the source files, they are well documented
 ## Coming Soon ##
 * Build a Compiler
 * Build a Decompiler
-* add a simple debugger (in progress)
+* add a simple debugger (Need to finish de assy to display instructions)
 
 ## About the Chip-8 interpreter ##
 Chip-8 is a simple, interpreted, programming language which was first used on some do-it-yourself computer systems 

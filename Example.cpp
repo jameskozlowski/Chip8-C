@@ -175,6 +175,7 @@ void DrawUI(sf::RenderWindow *window, sf::Font *font)
     os << "Reg  " << "Value " << endl << "------------"<< endl;
     
     os << "PC:  " << hex << (int)mychip8.pc << endl << endl;
+    os << "I:   " << hex << (int)mychip8.I << endl;
     
     for (int i = 0; i < 16; i++)
         os << "V" << hex << (int) i << ":  " << hex << (int)mychip8.V[i] << endl;

@@ -345,7 +345,7 @@ void Chip8EmulateCycle(Chip8CPU *Chip8)
 */
 void Chip8CPUNULL(Chip8CPU *Chip8)
 {
-    printf("bad opcode: %04X\n", Chip8->opcode );
+    printf("bad opcode: %04X at: %04X \n", Chip8->opcode, Chip8->pc );
 }
 
 

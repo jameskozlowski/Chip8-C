@@ -107,6 +107,7 @@ int main(int argc, char **argv)
                 else if (!run && event.key.code == sf::Keyboard::N)
                 {             
                     Chip8EmulateCycle(&mychip8);
+                    displayMemLocation = mychip8.pc;
                 }
                 else if (!run && event.key.code == sf::Keyboard::Down)                
                     displayMemLocation += 2;

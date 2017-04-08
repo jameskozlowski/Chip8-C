@@ -1,5 +1,5 @@
 /**
-* Chip-8 
+* Chip-8 Disassembler 
 * 
 * Chip-8 is a simple, interpreted, programming language which was first used on some do-it-yourself computer systems 
 * in the late 1970s and early 1980s. The COSMAC VIP, DREAM 6800, and ETI 660 computers are a few examples. 
@@ -19,25 +19,37 @@
 * @author  James Kozlowski
 * @version April 2, 2017
 */
-#ifndef CHIP8_EMU_H
-#define CHIP8_EMU_H
 
-#include <SFML/Graphics.hpp>
-
-/**
-* Draws the game screen in the game screen area
-*
-* @param window the SF::RenderWindow
-* @return none
-*/
-void DrawGameScreen(sf::RenderWindow *window);
+#ifndef CHIP8_DIS_H
+#define CHIP8_DIS_H
 
 /**
-* Draws the UI
+* Disassemble a given opcode and put it in the buffer
 *
-* @param window the SF::RenderWindow
+* @param opcodeInt Interger value of the op opcode
+* @param the buffer to store the Disassembled string
 * @return none
 */
-void DrawUI(sf::RenderWindow *window, sf::Font *font);
+void Chip8Disassemble(int opcodeInt, char *buffer);
+
+/**
+* Generate a string based on opcode and values
+*
+* @param opcodeformat the format of the opcode hex value
+* @param opcode to generate a string for
+* @param buffer buffer to store string in
+* @return none
+*/
+void genString(const char *opcodeformat, char *opcode, char *buffer);
+
+/**
+* replace the given char with the supplied car, only the first one found
+*
+* @param str string to repace value in
+* @param replace char to replace
+* @param with char to replace with
+* @return none
+*/
+void replaceChar(char *str, char replace, char with);
 
 #endif

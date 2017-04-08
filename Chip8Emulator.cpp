@@ -26,8 +26,11 @@
 #include <iostream>
 #include <sstream>
 #include <string.h>
+#include <iomanip>
 
 #include "Chip8.h"
+#include "Chip8Emulator.h"
+#include "Chip8Disassembler.h"
 
 using namespace std;
 
@@ -38,7 +41,7 @@ Chip8CPU mychip8;
 const int modifier = 10;
 
 //set screen width and height
-const int width = 64 * modifier + 550;
+const int width = 64 * modifier + 650;
 const int height = 32 * modifier + 300;
 
 //if true emulator is running, if false emulator is paused
@@ -49,6 +52,8 @@ int displayMemLocation;
 
 //holds the breakpoint
 int breakpoint = -1;
+
+using namespace std;
 
 int main(int argc, char **argv)
 {
@@ -96,19 +101,21 @@ int main(int argc, char **argv)
             {
                 //program/debugger keys
                 if (event.key.code == sf::Keyboard::Escape)                
-                        exit(0);
+                    exit(0);
                 else if (event.key.code == sf::Keyboard::Space)                
-                        run = !run;
-                else if (!run && event.key.code == sf::Keyboard::N)                
-                        Chip8EmulateCycle(&mychip8);
+                    run = !run;
+                else if (!run && event.key.code == sf::Keyboard::N)
+                {             
+                    Chip8EmulateCycle(&mychip8);
+                }
                 else if (!run && event.key.code == sf::Keyboard::Down)                
-                        displayMemLocation += 2;
+                    displayMemLocation += 2;
                 else if (!run && event.key.code == sf::Keyboard::Up)                
-                        displayMemLocation -= 2;
+                    displayMemLocation -= 2;
                 else if (!run && event.key.code == sf::Keyboard::PageDown)                
-                        displayMemLocation += 16;
+                    displayMemLocation += 16;
                 else if (!run && event.key.code == sf::Keyboard::PageUp)                
-                        displayMemLocation -= 16;       
+                    displayMemLocation -= 16;       
                 else if (!run && event.key.code == sf::Keyboard::B)
                 {
                     if (breakpoint == displayMemLocation)
@@ -267,25 +274,41 @@ void DrawUI(sf::RenderWindow *window, sf::Font *font)
     //print out memory
     stringstream mem;
     mem << "MEMORY" << endl;
-    mem << "Loc     " << "Value " << endl << "----------------------"<< endl;
+    mem << "B Loc     " << " Value " << "  Opcode" << endl << "----------------------"<< endl;
     
-
+    char buffer[50];
     for(int i = displayMemLocation - 20; i <= displayMemLocation + 20; i += 2)
+    {
+        int value = ((int)mychip8.memory[i] << 8) | (int)mychip8.memory[i + 1];
+        Chip8Disassemble(value, buffer);
         if (i == breakpoint)
-            mem << "* " << hex << (int)i << ":\t" << hex << (int)mychip8.memory[i] << hex << (int)mychip8.memory[i + 1] << endl;
+        {
+            mem << "* " << setfill('0') << setw(4) << hex << (int)i << ":\t";
+            mem << setfill('0') << setw(2) << hex << (int)mychip8.memory[i];
+            mem <<  setfill('0') << setw(2) << hex << (int)mychip8.memory[i + 1];
+            mem << "    " << buffer << endl;
+        }
         else
-            mem << "  " << hex << (int)i << ":\t" << hex << (int)mychip8.memory[i] << hex << (int)mychip8.memory[i + 1] << endl;
-    
+        {
+            mem << "  " << setfill('0') << setw(4) << hex << (int)i << ":\t";
+            mem << setfill('0') << setw(2) << hex << (int)mychip8.memory[i];
+            mem << setfill('0') << setw(2) << hex << (int)mychip8.memory[i + 1];
+            mem << "    " << buffer << endl;
+        }
+    }
+
     sf::Text memText;
     memText.setFont(*font); 
     memText.setString(mem.str());
     memText.setCharacterSize(20);
     memText.setColor(sf::Color(173, 173, 173));
-    memText.setPosition(870, 20);
+    memText.setPosition(865, 20);
 
     //current memory marker
-    sf::RectangleShape memrectangle(sf::Vector2f(300, 20));
+    sf::RectangleShape memrectangle(sf::Vector2f(400, 20));
     memrectangle.setFillColor(sf::Color(1, 112, 10));
+    if (displayMemLocation == breakpoint)
+        memrectangle.setFillColor(sf::Color::Red);
     memrectangle.setPosition(860, 323);
 
     //printout keypad
@@ -307,7 +330,7 @@ void DrawUI(sf::RenderWindow *window, sf::Font *font)
 
     //print out instructions
     stringstream instructions;
-    instructions << "Instruction" << endl;
+    instructions << "INSTRUCTIONS" << endl;
     instructions << "---------------------" << endl;
     instructions << "ESC: Quit" << endl;
     instructions << "F1: Save State" << endl;

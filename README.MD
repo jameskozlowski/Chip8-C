@@ -1,16 +1,20 @@
 # Chip-8 Emulator in C #
-This version is a port for a c++ version I made a while ago. I cleaned up the code and moved it from a large switch statement to function pointers to clean it up and make it easier to follow 
+This version of the chip-8 emulator is a port for a c++ version I made a while ago. I cleaned up the code and moved it from a large switch statement to function pointers to clean it up and make it easier to follow
+
+The emulator application is is written in c++.
 
 I wanted to port this over to a ARM Cortex-M0 MCU but was running into lots of problems, so I decided to first make a port to C for the desktop.
 
 I also wanted to work on a 6502 Emulator but wanted to clean this up first as a starting point for the larger more complicated emulator
 
+![Screenshot](screenshot.png "Emulator Screenshot")
+
 ## Example ##
 I have included a simple example using SFML libary for graphics/input
 you can compile it on linux using the folowing commands
 ```
-g++ -c Chip8Emulator.cpp Chip8.c
-g++ Chip8.o Chip8Emulator.o -o Chip8Emulator -lsfml-graphics -lsfml-window -lsfml-system
+g++ -c Chip8Emulator.cpp Chip8Disassembler.c Chip8.c
+g++ Chip8.o Chip8Emulator.o Chip8Disassembler.o -o Chip8Emulator -lsfml-graphics -lsfml-window -lsfml-system
 ./Chip8Emulator gamefile.c8
 ```
 

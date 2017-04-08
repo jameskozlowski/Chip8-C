@@ -3,6 +3,7 @@
 #include <SFML/Audio.hpp>
 #include <iostream>
 #include <sstream>
+#include <string.h>
 
 #include "Chip8.h"
 
@@ -233,40 +234,53 @@ void DrawUI(sf::RenderWindow *window, sf::Font *font)
     window->draw(rectangle);
 }
 
-
 void DrawScreen(sf::RenderWindow *window)
 {
     int screeny = 32;
     int screenx = 64;
-    modifier = 10;
+    int modifierFactor = modifier;
+
+
 
     if (mychip8.extendedGraphicsMode == true)
     {
         screeny = 64;
         screenx = 128;
-        modifier = 5;
+        modifierFactor = modifierFactor / 2;
     }
-    // Draw
-    for(int y = 0; y < screeny; ++y)        
-        for(int x = 0; x < screenx; ++x)
-        {
-            if(mychip8.videoMemory[(y*screenx) + x] == 0) 
-            {
-                sf::RectangleShape rectangle(sf::Vector2f(modifier, modifier));
-                rectangle.setFillColor(sf::Color::Black);
-                rectangle.setPosition(x * modifier + 4, y * modifier + 4);
-                window->draw(rectangle);
-            }
-            else            
-            {
-                sf::RectangleShape rectangle(sf::Vector2f(modifier, modifier));
-                rectangle.setFillColor(sf::Color::White);
-                rectangle.setPosition(x * modifier + 4, y * modifier + 4);
-                window->draw(rectangle);
-            }
 
-        }
+    sf::Uint8 screen[screeny * screenx * 4];
+    memset (screen, 0, screeny * screenx * 4);
+     for(int y = 0; y < screeny; y++)      
+        for(int x = 0; x < screenx; x++)
+            if(mychip8.videoMemory[(y*screenx) + x] == 1)
+            {
+                screen[(x * 4) + (y * screenx * 4) + 0] = 255;
+                screen[(x * 4) + (y * screenx * 4) + 1] = 255;
+                screen[(x * 4) + (y * screenx * 4) + 2] = 255;
+                screen[(x * 4) + (y * screenx * 4) + 3] = 255;
+            }
+            
+    sf::Image image;
+    image.create(screenx, screeny, screen);
+    //image.loadFromMemory(screen, 32 * modifier * 64 * modifier);
+
+    sf::Texture texture;
+    texture.create(screenx, screeny);
+    texture.update(image);
+    //
+    //texture.loadFromImage(image, sf::IntRect(0,0,32 * modifier, 64 * modifier));
+
+    sf::Sprite sprite;
+    //image.loadFromMemory(screen, 32 * 64 * modifier * 4);
+    sprite.setTexture(texture);
+    sprite.setScale(modifierFactor,modifierFactor);
+    //sprite.SetImage(screen);
+    sprite.setPosition(4,4);
+    window->draw(sprite);
+
 }
+
 
 
 

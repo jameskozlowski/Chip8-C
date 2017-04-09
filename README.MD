@@ -23,8 +23,6 @@ Have a look at the source files, they are well documented
 
 ## Coming Soon ##
 * Build a Compiler
-* Build a Decompiler
-* add a simple debugger (Need to finish de assy to display instructions)
 
 ## About the Chip-8 interpreter ##
 Chip-8 is a simple, interpreted, programming language which was first used on some do-it-yourself computer systems 

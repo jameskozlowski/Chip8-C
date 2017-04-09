@@ -109,13 +109,13 @@ int main(int argc, char **argv)
                     Chip8EmulateCycle(&mychip8);
                     displayMemLocation = mychip8.pc;
                 }
-                else if (!run && event.key.code == sf::Keyboard::Down)                
+                else if (!run && event.key.code == sf::Keyboard::Down) && displayMemLocation < 4074                
                     displayMemLocation += 2;
-                else if (!run && event.key.code == sf::Keyboard::Up)                
+                else if (!run && event.key.code == sf::Keyboard::Up) && displayMemLocation > 22                 
                     displayMemLocation -= 2;
-                else if (!run && event.key.code == sf::Keyboard::PageDown)                
+                else if (!run && event.key.code == sf::Keyboard::PageDown && displayMemLocation > 36 )                
                     displayMemLocation += 16;
-                else if (!run && event.key.code == sf::Keyboard::PageUp)                
+                else if (!run && event.key.code == sf::Keyboard::PageUp && displayMemLocation < 4080 )                
                     displayMemLocation -= 16;       
                 else if (!run && event.key.code == sf::Keyboard::B)
                 {
@@ -255,8 +255,8 @@ void DrawUI(sf::RenderWindow *window, sf::Font *font)
     os << "REGISTERS" << endl;
     os << "Reg  " << "Value " << endl << "------------"<< endl;
     
-    os << "PC:  " << hex << (int)mychip8.pc << endl << endl;
-    os << "I:   " << hex << (int)mychip8.I << endl;
+    os << "PC:  " << setfill('0') << setw(4) << hex << (int)mychip8.pc << endl;
+    os << "I:   " << setfill('0') << setw(4) << hex << (int)mychip8.I << endl << endl;
     
     for (int i = 0; i < 16; i++)
         os << "V" << hex << (int) i << ":  " << hex << (int)mychip8.V[i] << endl;
@@ -275,13 +275,14 @@ void DrawUI(sf::RenderWindow *window, sf::Font *font)
     //print out memory
     stringstream mem;
     mem << "MEMORY" << endl;
-    mem << "B Loc     " << " Value " << "  Opcode" << endl << "----------------------"<< endl;
+    mem << "B Loc     " << " Value " << "  Opcode" << endl << "---------------------------------"<< endl;
     
     char buffer[50];
     for(int i = displayMemLocation - 20; i <= displayMemLocation + 20; i += 2)
     {
         int value = ((int)mychip8.memory[i] << 8) | (int)mychip8.memory[i + 1];
         Chip8Disassemble(value, buffer);
+        //if this line is set as a break display the *
         if (i == breakpoint)
         {
             mem << "* " << setfill('0') << setw(4) << hex << (int)i << ":\t";
@@ -308,6 +309,7 @@ void DrawUI(sf::RenderWindow *window, sf::Font *font)
     //current memory marker
     sf::RectangleShape memrectangle(sf::Vector2f(400, 20));
     memrectangle.setFillColor(sf::Color(1, 112, 10));
+    //if the line is a break mark it red
     if (displayMemLocation == breakpoint)
         memrectangle.setFillColor(sf::Color::Red);
     memrectangle.setPosition(860, 323);
@@ -337,7 +339,7 @@ void DrawUI(sf::RenderWindow *window, sf::Font *font)
     instructions << "F1: Save State" << endl;
     instructions << "F2: Load State" << endl << endl;
     instructions << "SPACE: Pause/Run Emulation" << endl;
-    instructions << "N: Setp forward" << endl << endl;
+    instructions << "N: Step forward" << endl << endl;
     instructions << "While paused:" << endl;
     instructions << "Up/Down: Move memory location" << endl;
     instructions << "PgUp/PgDn: Move memory location page " << endl;

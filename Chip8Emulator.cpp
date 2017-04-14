@@ -12,7 +12,8 @@
 *
 * Chip-48 inspired a whole new crop of Chip-8 interpreters for various platforms, including MS-DOS, Windows 3.1, Amiga, HP48, MSX, Adam, and ColecoVision.
 *
-* Technical Reference(used for this emulator): http://devernay.free.fr/hacks/chip8/C8TECH10.HTM
+* Technical Reference(used for this emulator): http://devernay.
+.fr/hacks/chip8/C8TECH10.HTM
 *
 * More information: https://en.wikipedia.org/wiki/CHIP-8
 * 
@@ -109,9 +110,9 @@ int main(int argc, char **argv)
                     Chip8EmulateCycle(&mychip8);
                     displayMemLocation = mychip8.pc;
                 }
-                else if (!run && event.key.code == sf::Keyboard::Down) && displayMemLocation < 4074                
+                else if (!run && event.key.code == sf::Keyboard::Down && displayMemLocation < 4074)                
                     displayMemLocation += 2;
-                else if (!run && event.key.code == sf::Keyboard::Up) && displayMemLocation > 22                 
+                else if (!run && event.key.code == sf::Keyboard::Up && displayMemLocation > 22)                 
                     displayMemLocation -= 2;
                 else if (!run && event.key.code == sf::Keyboard::PageDown && displayMemLocation > 36 )                
                     displayMemLocation += 16;

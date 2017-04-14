@@ -71,7 +71,7 @@ const char * opCodes[][2] = {
     { "00FF", "HIGH" },
     { "FX30", "LD HF, VX" },
     { "FX75", "LD R, VX" },
-    { "FX85", "LD VX, R" },
+    { "FX85", "LD VX, R" }
 };
 
 /**
@@ -83,14 +83,14 @@ const char * opCodes[][2] = {
 */
 void Chip8Disassemble(int opcodeInt, char *buffer)
 {
-    char opcode[50];
+    char opcode[5];
     sprintf (opcode, "%04X", opcodeInt);
     for (int opCodesPtr = 0; opCodesPtr < opcodeCount; opCodesPtr++)
     {
         for (int i = 0; i < 4; i++)
         {
             char c = opCodes[opCodesPtr][0][i];
-            if (c == opcode[i] || c == 'X' || c == 'Y' || c == 'K' || c == 'N')
+            if (c != '\0' && (c == opcode[i] || c == 'X' || c == 'Y' || c == 'K' || c == 'N'))
             {
                 if (i == 3)
                 {
@@ -103,6 +103,9 @@ void Chip8Disassemble(int opcodeInt, char *buffer)
                 i = 4;
         }
     }
+    for (int i = 0; i < 4; i++)
+	buffer[i] = opcode[i];
+    buffer[4] = '\0';
 }
 
 /**
@@ -137,7 +140,7 @@ void replaceChar(char *str, char replace, char with)
 {
     char *c = str;
 
-    while (*str != '\0')
+    while (*c != '\0')
     {
         if (*c == replace)
         {

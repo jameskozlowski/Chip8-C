@@ -9,20 +9,38 @@ I also wanted to work on a 6502 Emulator but wanted to clean this up first as a 
 
 ![Screenshot](screenshot.png "Emulator Screenshot")
 
-## Example ##
-I have included a simple example using SFML libary for graphics/input
-you can compile it on linux using the folowing commands
+## Compile ##
+You will need the sfml(https://www.sfml-dev.org/) libs installed to compile and run this.
 ```
-g++ -c Chip8Emulator.cpp Chip8Disassembler.c Chip8.c
-g++ Chip8.o Chip8Emulator.o Chip8Disassembler.o -o Chip8Emulator -lsfml-graphics -lsfml-window -lsfml-system
-./Chip8Emulator gamefile.c8
+g++ -c Chip8Emulator.cpp  Chip8.c Chip8Disassembler.c Chip8Assembler.c
+g++ Chip8.o Chip8Emulator.o Chip8Disassembler.o Chip8Assembler.o -o Chip8Emu -lsfml-graphics -lsfml-window -lsfml-system
 ```
+
+## Running ##
+to play a game simple run it with the game file
+```
+Chip8Emu gamefile.c8
+```
+
+If you want to compile a file use this command:
+```
+Chip8Emu -a filenamein.c8 filenameout.c8
+```
+
+If you want to disassemble a file use this command:
+```
+Chip8Emu -d filenamein.c8 filenameout.c8
+```
+
+## Dissasember ##
+Like most Dissassember this has limited use, but was built for the debugger
+
+## Assember ##
+The Assembler uses the opcodes and format found here: [Technical Reference(used for this emulator)](http://devernay.free.fr/hacks/chip8/C8TECH10.HTM)
+It also uses dw to store a word of data db to store a byte of data and dc to store a string for an example of a program in the correct format see sctest.c8
 
 ## Documentation ##
 Have a look at the source files, they are well documented
-
-## Coming Soon ##
-* Build a Compiler
 
 ## About the Chip-8 interpreter ##
 Chip-8 is a simple, interpreted, programming language which was first used on some do-it-yourself computer systems 

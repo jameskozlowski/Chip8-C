@@ -32,6 +32,7 @@
 #include "Chip8.h"
 #include "Chip8Emulator.h"
 #include "Chip8Disassembler.h"
+#include "Chip8Assembler.h"
 
 using namespace std;
 
@@ -58,14 +59,52 @@ using namespace std;
 
 int main(int argc, char **argv)
 {
+
+    if (argc < 2)
+    {
+        PrintHelp();
+        return 0;
+    }
+
+    //assemble a file
+    if (strcmp(argv[1], "-a") == 0)
+    {
+        if (argc < 4)
+            PrintHelp();
+        else if (!Chip8AssProcessFile(argv[2], argv[3]))
+        {
+            cout << endl << "Error reading file" << endl;
+            PrintHelp();
+        }
+        //we are done so exit
+        return 0;
+    }
+
+    //disassemble a file
+    if (strcmp(argv[1], "-d") == 0)
+    {
+        if (argc < 4)
+            PrintHelp();
+        else if (!Chip8DisProcessFile (argv[2], argv[3]))
+        {
+            cout << endl << "Error reading file" << endl;
+            PrintHelp();
+        }
+        //we are done so exit
+        return 0;
+    }
+
+    //otherwise we must want to play a game;
+
     //reset the CPU
     Chip8Reset(&mychip8);
 
     //try to load the rom file
-    if (argc != 2 || Chip8LoadRom(&mychip8, argv[1]) == false)
+    if (Chip8LoadRom(&mychip8, argv[1]) == false)
     {
-        cout << "Error loading file";
-        return -1;
+        cout << endl << "Error loading file" << endl;
+        PrintHelp();
+        return 0;
     }
 
     //setup and open a window
@@ -407,4 +446,17 @@ void DrawGameScreen(sf::RenderWindow *window)
     sprite.setPosition(4,4);
 
     window->draw(sprite);
+}
+
+/**
+* prints out how to use the program
+*
+* @return none
+*/
+void PrintHelp()
+{
+    cout << endl << "Error, please use one of the following commands" << endl;
+    cout << "to play a game: Chip8Emu gamefile.c8" << endl;
+    cout << "To assemble a file: Chip8Emu -a filenamein.ca filename out.c8" << endl;
+    cout << "To disassemble a file: Chip8Emu -d filenamein.ca filename out.c8" << endl << endl;
 }

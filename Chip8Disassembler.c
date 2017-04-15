@@ -75,6 +75,60 @@ const char * opCodes[][2] = {
 };
 
 /**
+* Process a file
+*
+* @param filenamein file to read and disassemble
+* @param filenameout file to save the disassembled code to
+* @return false if the file could not be opened
+*/
+bool Chip8DisProcessFile (char* filenamein, char* filenameout)
+{
+    FILE *fpin;
+    FILE *fpout;
+
+    //buffer for disass opcides
+    char buffer[50];
+    
+    //current line in the file
+    int lineNumber = 0;
+
+    fpin = fopen(filenamein, "r");
+    fpout = fopen(filenameout, "w`");
+
+    //error opening file
+    if (fpin == NULL || fpout == NULL)
+        return false;
+
+    //proncess the file line by line
+    while (!feof(fpin)) 
+    {
+        //read in a opcode
+
+        int code = (char)fgetc(fpin);
+        
+        while (code == '\r' || code == '\n')
+            code = (char)fgetc(fpin);
+        
+        code = (code << 8) | (char)fgetc(fpin);
+        
+        //process it
+        Chip8Disassemble(code, buffer);
+
+        //write it to the file
+        fputs(buffer, fpout);
+
+        //write a new line
+        fputs("\n", fpout);
+    }
+
+    //close the files
+    fclose(fpin);
+    fclose(fpout);
+
+    return true;
+}
+
+/**
 * Disassemble a given opcode and put it in the buffer
 *
 * @param opcodeInt Interger value of the op opcode
@@ -95,7 +149,7 @@ void Chip8Disassemble(int opcodeInt, char *buffer)
                 if (i == 3)
                 {
                     strcpy(buffer, opCodes[opCodesPtr][1]);
-                    genString(opCodes[opCodesPtr][0], opcode, buffer);
+                    Chip8DisGenString(opCodes[opCodesPtr][0], opcode, buffer);
                     return;
                 }
             }
@@ -116,14 +170,14 @@ void Chip8Disassemble(int opcodeInt, char *buffer)
 * @param buffer buffer to store string in
 * @return none
 */
-void genString(const char *opcodeformat, char *opcode, char *buffer)
+void Chip8DisGenString(const char *opcodeformat, char *opcode, char *buffer)
 {
 
     for (int i = 0; i < 4; i++)
     {
         char c = opcodeformat[i];
         if (c == 'X' || c == 'Y' || c == 'K' || c == 'N')
-            replaceChar(buffer, c, opcode[i]);
+            Chip8DisReplaceChar(buffer, c, opcode[i]);
     }
 }
 
@@ -136,7 +190,7 @@ void genString(const char *opcodeformat, char *opcode, char *buffer)
 * @param with char to replace with
 * @return none
 */
-void replaceChar(char *str, char replace, char with)
+void Chip8DisReplaceChar(char *str, char replace, char with)
 {
     char *c = str;
 

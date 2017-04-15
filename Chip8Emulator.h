@@ -40,4 +40,11 @@ void DrawGameScreen(sf::RenderWindow *window);
 */
 void DrawUI(sf::RenderWindow *window, sf::Font *font);
 
+/**
+* prints out how to use the program
+*
+* @return none
+*/
+void PrintHelp();
+
 #endif

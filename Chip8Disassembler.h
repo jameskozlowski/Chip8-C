@@ -24,6 +24,15 @@
 #define CHIP8_DIS_H
 
 /**
+* Process a file
+*
+* @param filenamein file to read and disassemble
+* @param filenameout file to save the disassembled code to
+* @return false if the file could not be opened
+*/
+bool Chip8DisProcessFile (char* filenamein, char* filenameout);
+
+/**
 * Disassemble a given opcode and put it in the buffer
 *
 * @param opcodeInt Interger value of the op opcode
@@ -40,7 +49,7 @@ void Chip8Disassemble(int opcodeInt, char *buffer);
 * @param buffer buffer to store string in
 * @return none
 */
-void genString(const char *opcodeformat, char *opcode, char *buffer);
+void Chip8DisGenString(const char *opcodeformat, char *opcode, char *buffer);
 
 /**
 * replace the given char with the supplied car, only the first one found
@@ -50,6 +59,6 @@ void genString(const char *opcodeformat, char *opcode, char *buffer);
 * @param with char to replace with
 * @return none
 */
-void replaceChar(char *str, char replace, char with);
+void Chip8DisReplaceChar(char *str, char replace, char with);
 
 #endif
